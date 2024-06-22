@@ -4,7 +4,7 @@
 return [
     'scrapers' => [
         'scrapingbee' => [
-            'api_key' => env('SCRAPING_BEE_API_KEY'),
+            'api_key' => env('SCRAPINGBEE_API_KEY'),
             'base_uri' => 'https://app.scrapingbee.com/api/v1/',
             'priority' => 0,
         ],
