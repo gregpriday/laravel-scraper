@@ -45,7 +45,7 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         );
     }
 
-    public function transformResponse(ResponseInterface $response): ResponseInterface
+    public function transformResponse(ResponseInterface $response, string $url): ResponseInterface
     {
         $data = json_decode((string) $response->getBody(), true);
 

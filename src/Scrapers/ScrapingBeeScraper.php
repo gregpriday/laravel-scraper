@@ -39,7 +39,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    public function transformResponse(ResponseInterface $response, ?string $url = null): ResponseInterface
+    public function transformResponse(ResponseInterface $response, string $url): ResponseInterface
     {
         $body = (string) $response->getBody();
         $statusCode = $response->getStatusCode();

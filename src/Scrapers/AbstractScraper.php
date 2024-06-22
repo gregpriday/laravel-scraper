@@ -39,7 +39,7 @@ abstract class AbstractScraper implements ScraperInterface
 
     abstract protected function buildRequest(string $url): Request;
 
-    abstract public function transformResponse(ResponseInterface $response): ResponseInterface;
+    abstract public function transformResponse(ResponseInterface $response, string $url): ResponseInterface;
 
     abstract public function getName(): string;
 }

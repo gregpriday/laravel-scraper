@@ -105,7 +105,8 @@ class ScraperMiddleware
     {
         $scrapers = $this->manager->getScrapers();
         $scraper = $scrapers[$options['scraper_index']];
+        $url = (string) $options['original_request']->getUri();
 
-        return $scraper->transformResponse($response);
+        return $scraper->transformResponse($response, $url);
     }
 }

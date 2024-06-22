@@ -11,7 +11,7 @@ interface ScraperInterface
 
     public function transformRequest(RequestInterface $request, array $options = []): RequestInterface;
 
-    public function transformResponse(ResponseInterface $response): ResponseInterface;
+    public function transformResponse(ResponseInterface $response, string $url): ResponseInterface;
 
     public function getName(): string;
 }
