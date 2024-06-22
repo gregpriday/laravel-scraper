@@ -10,7 +10,7 @@ return [
         ],
         'zyte' => [
             'api_key' => env('ZYTE_API_KEY'),
-            'base_uri' => 'https://app.zyte.com/api/v2/',
+            'base_uri' => 'https://api.zyte.com/v1/',
             'priority' => 1,
         ],
     ],

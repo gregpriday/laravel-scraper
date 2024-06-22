@@ -2,10 +2,10 @@
 
 namespace GregPriday\Scraper\Tests;
 
-use GregPriday\Scraper\ScraperServiceProvider;
 use GregPriday\Scraper\ScraperClientFactory;
-use Orchestra\Testbench\TestCase as Orchestra;
+use GregPriday\Scraper\ScraperServiceProvider;
 use GuzzleHttp\Client;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
@@ -29,6 +29,7 @@ class TestCase extends Orchestra
     protected function getScraperClient($config = []): Client
     {
         $factory = new ScraperClientFactory();
+
         return $factory->make($config);
     }
 

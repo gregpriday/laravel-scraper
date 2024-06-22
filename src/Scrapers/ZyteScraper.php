@@ -4,10 +4,8 @@ namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ZyteScraper extends AbstractScraper implements ScraperInterface
@@ -23,33 +21,28 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
                 'Authorization' => 'Basic '.base64_encode($this->config['api_key'].':'),
                 'Content-Type' => 'application/json',
             ],
+            'timeout' => 300,
         ]);
-    }
-
-    public function transformRequest(RequestInterface $request, array $options = []): Request
-    {
-        $url = $request->getUri()->__toString();
-        return $this->buildRequest($url, $options);
     }
 
     protected function buildRequest(string $url, array $options = []): Request
     {
-        $payload = [
+        $payload = array_merge([
             'url' => $url,
             'browserHtml' => true,
-        ];
+            'httpResponseHeaders' => true,
+        ], $options);
 
-        // Merge any additional options
-        $payload = array_merge($payload, $options);
-
-        return new Request('POST', $this->config['base_uri'].'extract', [
-            'headers' => [
-                'Authorization' => 'Basic '.base64_encode($this->config['api_key']),
+        return new Request(
+            'POST',
+            $this->config['base_uri'].'extract',
+            [
                 'Content-Type' => 'application/json',
+                'Authorization' => 'Basic '.base64_encode($this->config['api_key'].':'),
+                'Accept-Encoding' => 'gzip',
             ],
-            'body' => json_encode($payload),
-        ]);
-
+            json_encode($payload)
+        );
     }
 
     public function transformResponse(ResponseInterface $response): ResponseInterface

@@ -4,10 +4,8 @@ namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
@@ -19,14 +17,8 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         parent::__construct($config);
         $this->client = new Client([
             'base_uri' => 'https://app.scrapingbee.com/api/v1/',
-            'timeout' => 140,
+            'timeout' => 300,
         ]);
-    }
-
-    public function transformRequest(RequestInterface $request, array $options = []): Request
-    {
-        $url = $request->getUri()->__toString();
-        return $this->buildRequest($url, $options);
     }
 
     protected function buildRequest(string $url, array $options = []): Request
@@ -41,7 +33,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         // Merge any additional options
         $params = array_merge($params, $options);
 
-        $uri = 'https://app.scrapingbee.com/api/v1/?' . http_build_query($params);
+        $uri = 'https://app.scrapingbee.com/api/v1/?'.http_build_query($params);
 
         return new Request('GET', $uri, [
             'headers' => [
@@ -50,7 +42,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    public function transformResponse(ResponseInterface $response, string $url = null): ResponseInterface
+    public function transformResponse(ResponseInterface $response, ?string $url = null): ResponseInterface
     {
         $body = (string) $response->getBody();
         $statusCode = $response->getStatusCode();

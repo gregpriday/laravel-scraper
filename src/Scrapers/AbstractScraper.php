@@ -21,16 +21,23 @@ abstract class AbstractScraper implements ScraperInterface
     {
         try {
             $request = $this->buildRequest($url, $options);
-            return $this->transformResponse($this->client->send($request), $url);
+            $response = $this->client->send($request);
+
+            return $this->transformResponse($response, $url);
         } catch (GuzzleException $e) {
             // Handle the exception (log it, throw a custom exception, etc.)
-            throw new \Exception(self::class . ' scraping failed: '.$e->getMessage());
+            throw new \Exception(self::class.' scraping failed: '.$e->getMessage());
         }
     }
 
-    abstract protected function buildRequest(string $url, array $options = []): Request;
+    public function transformRequest(RequestInterface $request, array $options = []): Request
+    {
+        $url = $request->getUri()->__toString();
 
-    abstract public function transformRequest(RequestInterface $request, array $options = []): Request;
+        return $this->buildRequest($url, $options);
+    }
+
+    abstract protected function buildRequest(string $url, array $options = []): Request;
 
     abstract public function transformResponse(ResponseInterface $response): ResponseInterface;
 
