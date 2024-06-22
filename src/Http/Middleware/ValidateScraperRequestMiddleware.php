@@ -34,7 +34,7 @@ class ValidateScraperRequestMiddleware
                 throw new ScraperException('Host not allowed for scraping.');
             }
 
-            return $handler($request);
+            return $handler($request, $options);
         };
     }
 }

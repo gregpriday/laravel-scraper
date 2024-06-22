@@ -11,57 +11,64 @@ class ScraperMiddleware
 {
     protected $manager;
 
-    public function __construct(ScraperManager $manager)
+    private int $retries;
+
+    public function __construct(ScraperManager $manager, int $retries = 1)
     {
         $this->manager = $manager;
+        $this->retries = $retries;
     }
 
     public function __invoke(callable $handler)
     {
         return function (RequestInterface $request, array $options) use ($handler) {
-            // Throw an error for POST requests
             if ($request->getMethod() === 'POST') {
                 throw new ScraperException('POST requests are not supported for scraping.');
             }
 
             $exceptions = [];
-            foreach ($this->manager->getScrapers() as $scraper) {
-                try {
-                    $transformedRequest = $scraper->transformRequest($request, $options);
+            $scrapers = $this->manager->getScrapers();
 
-                    return $handler($transformedRequest, $options)
-                        ->then(
-                            function (ResponseInterface $response) use ($scraper) {
-                                // Check if the response is successful
-                                if ($this->isSuccessfulResponse($response)) {
-                                    return $scraper->transformResponse($response);
+            for ($try = 1; $try <= $this->retries; $try++) {
+                foreach ($scrapers as $scraper) {
+                    try {
+                        $transformedRequest = $scraper->transformRequest($request, $options);
+
+                        return $handler($transformedRequest, $options)
+                            ->then(
+                                function (ResponseInterface $response) use ($scraper) {
+                                    if ($this->isSuccessfulResponse($response)) {
+                                        return $scraper->transformResponse($response);
+                                    }
+                                    throw new ScraperException("Scraper {$scraper->getName()} failed with status code: {$response->getStatusCode()}");
                                 }
+                            )
+                            ->otherwise(
+                                function (\Exception $e) use ($scraper, &$exceptions, $try) {
+                                    $exceptions[] = [
+                                        'try' => $try,
+                                        'scraper' => $scraper->getName(),
+                                        'exception' => $e->getMessage(),
+                                    ];
+                                    throw $e;
+                                }
+                            );
+                    } catch (\Exception $e) {
+                        $exceptions[] = [
+                            'try' => $try,
+                            'scraper' => $scraper->getName(),
+                            'exception' => $e->getMessage(),
+                        ];
 
-                                // If not successful, throw an exception to try the next scraper
-                                throw new ScraperException("Scraper {$scraper->getName()} failed with status code: {$response->getStatusCode()}");
-                            })
-                        ->otherwise(
-                            function (\Exception $e) use ($scraper, &$exceptions) {
-                                $exceptions[] = [
-                                    'scraper' => $scraper->getName(),
-                                    'exception' => $e->getMessage(),
-                                ];
-                                // Rethrow the exception to continue to the next scraper
-                                throw $e;
-                            }
-                        );
-                } catch (\Exception $e) {
-                    $exceptions[] = [
-                        'scraper' => $scraper->getName(),
-                        'exception' => $e->getMessage(),
-                    ];
-                    // Log the exception or handle it as needed
-                    // Continue to the next scraper
+                        // Continue to the next scraper in this try
+                        continue;
+                    }
                 }
+                // If we've gone through all scrapers and haven't returned, move to the next try
             }
 
-            // If all scrapers failed, throw a comprehensive exception
-            throw new ScraperException('All scrapers failed to process the request. Details: '.json_encode($exceptions));
+            // If all retries across all scrapers failed, throw a comprehensive exception
+            throw new ScraperException('All scraper attempts failed. Details: '.json_encode($exceptions));
         };
     }
 

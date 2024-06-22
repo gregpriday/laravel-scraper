@@ -16,7 +16,7 @@ class ScraperClientFactory
         $manager = $manager ?? app(ScraperManager::class);
 
         $stack = HandlerStack::create();
-        $stack->push(new ScraperMiddleware($manager));
+        $stack->push(new ScraperMiddleware($manager, $config['retries'] ?? 1));
         $stack->push(new ValidateScraperRequestMiddleware());
 
         $config = array_merge($config, ['handler' => $stack]);
