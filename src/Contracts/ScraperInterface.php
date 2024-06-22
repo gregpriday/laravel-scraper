@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 interface ScraperInterface
 {
-    public function scrape(string $url, array $options = []): ResponseInterface;
+    public function get(string $url, array $options = []): ResponseInterface;
 
     public function transformRequest(RequestInterface $request, array $options = []): RequestInterface;
 

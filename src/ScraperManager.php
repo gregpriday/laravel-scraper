@@ -26,6 +26,8 @@ class ScraperManager extends Manager
         ];
 
         $this->sortScrapers();
+
+        $this->drivers[$scraper->getName()] = $scraper;
     }
 
     protected function sortScrapers()

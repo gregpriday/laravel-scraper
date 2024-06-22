@@ -6,7 +6,6 @@ use GregPriday\Scraper\Http\Middleware\ScraperMiddleware;
 use GregPriday\Scraper\ScraperManager;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
-use GuzzleRetry\GuzzleRetryMiddleware;
 
 class ScraperClientFactory
 {

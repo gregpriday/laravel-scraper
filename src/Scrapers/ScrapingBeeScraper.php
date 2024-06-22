@@ -3,16 +3,16 @@
 namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
-use GregPriday\Scraper\Contracts\ScraperResponseInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
 {
-    protected $client;
+    protected Client $client;
 
     public function __construct(array $config)
     {
@@ -23,7 +23,13 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    public function scrape(string $url, array $options = []): ScraperResponseInterface
+    public function transformRequest(RequestInterface $request, array $options = []): Request
+    {
+        $url = $request->getUri()->__toString();
+        return $this->buildRequest($url, $options);
+    }
+
+    protected function buildRequest(string $url, array $options = []): Request
     {
         $params = [
             'api_key' => $this->config['api_key'],
@@ -35,32 +41,23 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         // Merge any additional options
         $params = array_merge($params, $options);
 
-        try {
-            $response = $this->client->get('', [
-                'query' => $params,
-            ]);
+        $uri = 'https://app.scrapingbee.com/api/v1/?' . http_build_query($params);
 
-            return $this->transformResponse($response);
-        } catch (GuzzleException $e) {
-            // Handle the exception (log it, throw a custom exception, etc.)
-            throw new \Exception('ScrapingBee scraping failed: '.$e->getMessage());
-        }
+        return new Request('GET', $uri, [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+        ]);
     }
 
-    public function transformRequest(RequestInterface $request, array $options = []): RequestInterface
-    {
-        // ScrapingBee doesn't require request transformation
-        return $request;
-    }
-
-    public function transformResponse(ResponseInterface $response): ResponseInterface
+    public function transformResponse(ResponseInterface $response, string $url = null): ResponseInterface
     {
         $body = (string) $response->getBody();
         $statusCode = $response->getStatusCode();
         $headers = $response->getHeaders();
 
         // Extract the resolved URL from the 'Spb-Resolved-Url' header
-        $resolvedUrl = $headers['Spb-Resolved-Url'][0] ?? '';
+        $resolvedUrl = $response->getHeaderLine('Spb-resolved-url') ?? $url ?? '';
 
         // Add the resolved URL as a custom header
         $headers['X-Resolved-Url'] = [$resolvedUrl];

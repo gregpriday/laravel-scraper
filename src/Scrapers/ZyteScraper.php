@@ -5,13 +5,14 @@ namespace GregPriday\Scraper\Scrapers;
 use GregPriday\Scraper\Contracts\ScraperInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ZyteScraper extends AbstractScraper implements ScraperInterface
 {
-    protected $client;
+    protected Client $client;
 
     public function __construct(array $config)
     {
@@ -25,7 +26,13 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    public function scrape(string $url, array $options = []): ResponseInterface
+    public function transformRequest(RequestInterface $request, array $options = []): Request
+    {
+        $url = $request->getUri()->__toString();
+        return $this->buildRequest($url, $options);
+    }
+
+    protected function buildRequest(string $url, array $options = []): Request
     {
         $payload = [
             'url' => $url,
@@ -35,23 +42,14 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         // Merge any additional options
         $payload = array_merge($payload, $options);
 
-        try {
-            $response = $this->client->post('extract', [
-                'json' => $payload,
-            ]);
+        return new Request('POST', $this->config['base_uri'].'extract', [
+            'headers' => [
+                'Authorization' => 'Basic '.base64_encode($this->config['api_key']),
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode($payload),
+        ]);
 
-            return $this->transformResponse($response);
-        } catch (GuzzleException $e) {
-            // Handle the exception (log it, throw a custom exception, etc.)
-            throw new \Exception('Zyte scraping failed: '.$e->getMessage());
-        }
-    }
-
-    public function transformRequest(RequestInterface $request, array $options = []): RequestInterface
-    {
-        // For Zyte, we don't need to transform the request
-        // as we're using a separate client for API calls
-        return $request;
     }
 
     public function transformResponse(ResponseInterface $response): ResponseInterface
