@@ -4,19 +4,21 @@ namespace GregPriday\Scraper\Http\Middleware;
 
 use GregPriday\Scraper\Exceptions\ScraperException;
 use GregPriday\Scraper\ScraperManager;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ScraperMiddleware
 {
-    protected $manager;
+    protected ScraperManager $manager;
 
-    private int $retries;
+    protected int $maxRetries;
 
-    public function __construct(ScraperManager $manager, int $retries = 1)
+    public function __construct(ScraperManager $manager, int $maxRetries = 3)
     {
         $this->manager = $manager;
-        $this->retries = $retries;
+        $this->maxRetries = $maxRetries;
     }
 
     public function __invoke(callable $handler)
@@ -26,56 +28,84 @@ class ScraperMiddleware
                 throw new ScraperException('POST requests are not supported for scraping.');
             }
 
-            $exceptions = [];
-            $scrapers = $this->manager->getScrapers();
+            $options['original_request'] = $request;
+            $options['scraper_retry_count'] = 0;
+            $options['scraper_index'] = 0;
 
-            for ($try = 1; $try <= $this->retries; $try++) {
-                foreach ($scrapers as $scraper) {
-                    try {
-                        $transformedRequest = $scraper->transformRequest($request, $options);
-
-                        return $handler($transformedRequest, $options)
-                            ->then(
-                                function (ResponseInterface $response) use ($scraper) {
-                                    if ($this->isSuccessfulResponse($response)) {
-                                        return $scraper->transformResponse($response);
-                                    }
-                                    throw new ScraperException("Scraper {$scraper->getName()} failed with status code: {$response->getStatusCode()}");
-                                }
-                            )
-                            ->otherwise(
-                                function (\Exception $e) use ($scraper, &$exceptions, $try) {
-                                    $exceptions[] = [
-                                        'try' => $try,
-                                        'scraper' => $scraper->getName(),
-                                        'exception' => $e->getMessage(),
-                                    ];
-                                    throw $e;
-                                }
-                            );
-                    } catch (\Exception $e) {
-                        $exceptions[] = [
-                            'try' => $try,
-                            'scraper' => $scraper->getName(),
-                            'exception' => $e->getMessage(),
-                        ];
-
-                        // Continue to the next scraper in this try
-                        continue;
-                    }
-                }
-                // If we've gone through all scrapers and haven't returned, move to the next try
-            }
-
-            // If all retries across all scrapers failed, throw a comprehensive exception
-            throw new ScraperException('All scraper attempts failed. Details: '.json_encode($exceptions));
+            return $this->executeRequest($request, $options, $handler);
         };
     }
 
-    protected function isSuccessfulResponse(ResponseInterface $response): bool
+    protected function executeRequest(RequestInterface $request, array $options, callable $handler): Promise
     {
-        $statusCode = $response->getStatusCode();
+        $scrapers = $this->manager->getScrapers();
+        $scraper = $scrapers[$options['scraper_index']];
+        $transformedRequest = $scraper->transformRequest($request, $options);
 
-        return $statusCode >= 200 && $statusCode < 300;
+        return $handler($transformedRequest, $options)->then(
+            $this->onFulfilled($options, $handler),
+            $this->onRejected($options, $handler)
+        );
+    }
+
+    protected function onFulfilled(array $options, callable $handler): callable
+    {
+        return function (ResponseInterface $response) use ($options, $handler) {
+            if ($this->shouldRetry($options, $response)) {
+                return $this->doRetry($options, $handler);
+            }
+
+            return $this->transformResponse($response, $options);
+        };
+    }
+
+    protected function onRejected(array $options, callable $handler): callable
+    {
+        return function ($reason) use ($options, $handler) {
+            if ($reason instanceof RequestException && $this->shouldRetry($options, $reason->getResponse())) {
+                return $this->doRetry($options, $handler);
+            }
+
+            throw $reason;
+        };
+    }
+
+    protected function shouldRetry(array $options, ?ResponseInterface $response = null): bool
+    {
+        $scrapers = $this->manager->getScrapers();
+        $totalAttempts = $options['scraper_retry_count'] * count($scrapers) + $options['scraper_index'] + 1;
+
+        if ($totalAttempts >= $this->maxRetries * count($scrapers)) {
+            return false;
+        }
+
+        if ($response) {
+            $statusCode = $response->getStatusCode();
+
+            return ($statusCode >= 500 && $statusCode < 600) || $statusCode === 429;
+        }
+
+        return false;
+    }
+
+    protected function doRetry(array $options, callable $handler): Promise
+    {
+        $scrapers = $this->manager->getScrapers();
+        $options['scraper_index']++;
+
+        if ($options['scraper_index'] >= count($scrapers)) {
+            $options['scraper_index'] = 0;
+            $options['scraper_retry_count']++;
+        }
+
+        return $this->executeRequest($options['original_request'], $options, $handler);
+    }
+
+    protected function transformResponse(ResponseInterface $response, array $options): ResponseInterface
+    {
+        $scrapers = $this->manager->getScrapers();
+        $scraper = $scrapers[$options['scraper_index']];
+
+        return $scraper->transformResponse($response);
     }
 }

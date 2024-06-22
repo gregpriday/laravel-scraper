@@ -51,13 +51,44 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
 
         $body = $data['browserHtml'] ?? '';
         $statusCode = $data['statusCode'] ?? 200;
-        $headers = $data['httpResponseHeaders'] ?? [];
+        $rawHeaders = $data['httpResponseHeaders'] ?? [];
+
+        // Transform the headers into the correct format
+        $headers = $this->transformHeaders($rawHeaders);
 
         // Add the resolved URL as a custom header
         $headers['X-Resolved-Url'] = [$data['url'] ?? ''];
 
         // Create a new PSR-7 Response object
         return new Response($statusCode, $headers, $body);
+    }
+
+    protected function transformHeaders(array $rawHeaders): array
+    {
+        $headers = [];
+        foreach ($rawHeaders as $header) {
+            if (isset($header['name']) && isset($header['value'])) {
+                $name = strtolower($header['name']);
+                if ($name === 'set-cookie') {
+                    // Handle set-cookie headers separately
+                    if (! isset($headers[$name])) {
+                        $headers[$name] = [];
+                    }
+                    // Split multiple cookies and add them individually
+                    $cookies = explode("\n", $header['value']);
+                    foreach ($cookies as $cookie) {
+                        $headers[$name][] = trim($cookie);
+                    }
+                } else {
+                    if (! isset($headers[$name])) {
+                        $headers[$name] = [];
+                    }
+                    $headers[$name][] = $header['value'];
+                }
+            }
+        }
+
+        return $headers;
     }
 
     public function getName(): string

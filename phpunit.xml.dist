@@ -29,7 +29,7 @@
         </include>
     </source>
     <php>
-        <env name="SCRAPING_BEE_API_KEY" value="your_scraping_bee_api_key_here"/>
+        <env name="SCRAPINGBEE_API_KEY" value="your_scraping_bee_api_key_here"/>
         <env name="ZYTE_API_KEY" value="your_zyte_api_key_here"/>
     </php>
 </phpunit>

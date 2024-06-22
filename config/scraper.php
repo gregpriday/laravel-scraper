@@ -15,6 +15,7 @@ return [
         ],
     ],
     'http' => [
-        'retries' => env('SCRAPER_HTTP_RETRIES', 1),
+        'timeout' => 120,
+        'retries' => env('SCRAPER_HTTP_RETRIES', 3),
     ],
 ];
