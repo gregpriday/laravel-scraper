@@ -3,6 +3,7 @@
 namespace GregPriday\Scraper\Http;
 
 use GregPriday\Scraper\Http\Middleware\ScraperMiddleware;
+use GregPriday\Scraper\Http\Middleware\ValidateScraperRequestMiddleware;
 use GregPriday\Scraper\ScraperManager;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
@@ -16,6 +17,7 @@ class ScraperClientFactory
 
         $stack = HandlerStack::create();
         $stack->push(new ScraperMiddleware($manager));
+        $stack->push(new ValidateScraperRequestMiddleware());
 
         $config = array_merge($config, ['handler' => $stack]);
 
