@@ -13,6 +13,6 @@ return [
         ],
     ],
     'http' => [
-        'timeout' => 10,
+        'timeout' => 30,
     ],
 ];

@@ -16,11 +16,6 @@ class ScraperClientFactory
         $manager = $manager ?? app(ScraperManager::class);
 
         $stack = HandlerStack::create();
-        $stack->push(GuzzleRetryMiddleware::factory([
-            'retry_on_status' => [403, 429, 500, 502, 503, 504],
-            'max_retry_attempts' => 3,
-            'retry_on_timeout' => true,
-        ]));
         $stack->push(new ScraperMiddleware($manager));
 
         $config = array_merge($config, ['handler' => $stack]);
