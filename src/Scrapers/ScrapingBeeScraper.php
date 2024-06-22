@@ -6,7 +6,9 @@ use GregPriday\Scraper\Contracts\ScraperInterface;
 use GregPriday\Scraper\Contracts\ScraperResponseInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
 {
@@ -51,7 +53,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         return $request;
     }
 
-    public function transformResponse(mixed $response): ScraperResponseInterface
+    public function transformResponse(ResponseInterface $response): ResponseInterface
     {
         $body = (string) $response->getBody();
         $statusCode = $response->getStatusCode();
@@ -60,8 +62,11 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         // Extract the resolved URL from the 'Spb-Resolved-Url' header
         $resolvedUrl = $headers['Spb-Resolved-Url'][0] ?? '';
 
-        // Create and return a ScraperResponseInterface implementation
-        return new ScrapingBeeScraperResponse($body, $statusCode, $resolvedUrl, $headers);
+        // Add the resolved URL as a custom header
+        $headers['X-Resolved-Url'] = [$resolvedUrl];
+
+        // Create a new PSR-7 Response object
+        return new Response($statusCode, $headers, $body);
     }
 
     public function getName(): string

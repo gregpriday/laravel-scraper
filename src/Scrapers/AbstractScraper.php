@@ -3,8 +3,8 @@
 namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
-use GregPriday\Scraper\Contracts\ScraperResponseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractScraper implements ScraperInterface
 {
@@ -15,11 +15,11 @@ abstract class AbstractScraper implements ScraperInterface
         $this->config = $config;
     }
 
-    abstract public function scrape(string $url, array $options = []): ScraperResponseInterface;
+    abstract public function scrape(string $url, array $options = []): ResponseInterface;
 
     abstract public function transformRequest(RequestInterface $request, array $options = []): RequestInterface;
 
-    abstract public function transformResponse(mixed $response): ScraperResponseInterface;
+    abstract public function transformResponse(ResponseInterface $response): ResponseInterface;
 
     abstract public function getName(): string;
 }

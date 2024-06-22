@@ -3,10 +3,11 @@
 namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
-use GregPriday\Scraper\Contracts\ScraperResponseInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class ZyteScraper extends AbstractScraper implements ScraperInterface
 {
@@ -24,7 +25,7 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    public function scrape(string $url, array $options = []): ScraperResponseInterface
+    public function scrape(string $url, array $options = []): ResponseInterface
     {
         $payload = [
             'url' => $url,
@@ -39,9 +40,7 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
                 'json' => $payload,
             ]);
 
-            $data = json_decode($response->getBody(), true);
-
-            return $this->transformResponse($data);
+            return $this->transformResponse($response);
         } catch (GuzzleException $e) {
             // Handle the exception (log it, throw a custom exception, etc.)
             throw new \Exception('Zyte scraping failed: '.$e->getMessage());
@@ -55,16 +54,19 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         return $request;
     }
 
-    public function transformResponse(mixed $response): ScraperResponseInterface
+    public function transformResponse(ResponseInterface $response): ResponseInterface
     {
-        // Create and return a ScraperResponseInterface implementation
-        // You'll need to create this class (e.g., ZyteScraperResponse)
-        return new ZyteScraperResponse(
-            $response['browserHtml'] ?? '',
-            $response['statusCode'] ?? 200,
-            $response['url'] ?? '',
-            $response['httpResponseHeaders'] ?? []
-        );
+        $data = json_decode((string) $response->getBody(), true);
+
+        $body = $data['browserHtml'] ?? '';
+        $statusCode = $data['statusCode'] ?? 200;
+        $headers = $data['httpResponseHeaders'] ?? [];
+
+        // Add the resolved URL as a custom header
+        $headers['X-Resolved-Url'] = [$data['url'] ?? ''];
+
+        // Create a new PSR-7 Response object
+        return new Response($statusCode, $headers, $body);
     }
 
     public function getName(): string

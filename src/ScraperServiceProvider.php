@@ -23,12 +23,22 @@ class ScraperServiceProvider extends PackageServiceProvider
             $manager = new ScraperManager($app);
 
             // Register ScrapingBee scraper
-            $scrapingBeeScraper = new ScrapingBeeScraper($app->config['scraper.scrapers.scrapingbee']);
-            $manager->addScraper($scrapingBeeScraper);
+            // If there is an API key in the config, add the scraper
+            if ($app->config['scraper.scrapers.scrapingbee.api_key']) {
+                $scrapingBeeScraper = new ScrapingBeeScraper($app->config['scraper.scrapers.scrapingbee']);
+                $manager->addScraper($scrapingBeeScraper);
+            }
 
             // Register Zyte scraper
-            $zyteScraper = new ZyteScraper($app['config']['scraper.scrapers.zyte']);
-            $manager->addScraper($zyteScraper);
+            if ($app->config['scraper.scrapers.zyte.api_key']) {
+                $zyteScraper = new ZyteScraper($app->config['scraper.scrapers.zyte']);
+                $manager->addScraper($zyteScraper);
+            }
+
+            // If there are no scrapers, throw an exception
+            if (empty($manager->getScrapers())) {
+                throw new \Exception('No scrapers have been configured');
+            }
 
             return $manager;
         });
