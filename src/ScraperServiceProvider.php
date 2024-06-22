@@ -49,6 +49,10 @@ class ScraperServiceProvider extends PackageServiceProvider
                 $app->make(ScraperManager::class)
             );
         });
+
+        $this->app->singleton(Scraper::class, function ($app) {
+            return new Scraper($app->make('scraper.client'));
+        });
     }
 
     public function provides(): array
