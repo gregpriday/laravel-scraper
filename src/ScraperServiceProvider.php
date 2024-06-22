@@ -3,12 +3,10 @@
 namespace GregPriday\Scraper;
 
 use GregPriday\Scraper\Http\ScraperClientFactory;
-use Illuminate\Support\Facades\App;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
 use GregPriday\Scraper\Scrapers\ScrapingBeeScraper;
 use GregPriday\Scraper\Scrapers\ZyteScraper;
-use GregPriday\Scraper\Http\ScraperClient;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class ScraperServiceProvider extends PackageServiceProvider
 {

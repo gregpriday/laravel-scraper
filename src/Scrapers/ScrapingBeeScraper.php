@@ -17,7 +17,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         parent::__construct($config);
         $this->client = new Client([
             'base_uri' => 'https://app.scrapingbee.com/api/v1/',
-            'timeout'  => 140,
+            'timeout' => 140,
         ]);
     }
 
@@ -41,7 +41,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
             return $this->transformResponse($response);
         } catch (GuzzleException $e) {
             // Handle the exception (log it, throw a custom exception, etc.)
-            throw new \Exception("ScrapingBee scraping failed: " . $e->getMessage());
+            throw new \Exception('ScrapingBee scraping failed: '.$e->getMessage());
         }
     }
 

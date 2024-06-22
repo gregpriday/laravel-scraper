@@ -2,10 +2,10 @@
 
 namespace GregPriday\Scraper\Http\Middleware;
 
+use GregPriday\Scraper\Exceptions\ScraperException;
+use GregPriday\Scraper\ScraperManager;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use GregPriday\Scraper\ScraperManager;
-use GregPriday\Scraper\Exceptions\ScraperException;
 
 class ScraperMiddleware
 {
@@ -21,7 +21,7 @@ class ScraperMiddleware
         return function (RequestInterface $request, array $options) use ($handler) {
             // Throw an error for POST requests
             if ($request->getMethod() === 'POST') {
-                throw new ScraperException("POST requests are not supported for scraping.");
+                throw new ScraperException('POST requests are not supported for scraping.');
             }
 
             $exceptions = [];
@@ -40,7 +40,7 @@ class ScraperMiddleware
                 } catch (\Exception $e) {
                     $exceptions[] = [
                         'scraper' => $scraper->getName(),
-                        'exception' => $e->getMessage()
+                        'exception' => $e->getMessage(),
                     ];
                     // Log the exception or handle it as needed
                     // Continue to the next scraper
@@ -48,13 +48,14 @@ class ScraperMiddleware
             }
 
             // If all scrapers failed, throw a comprehensive exception
-            throw new ScraperException("All scrapers failed to process the request. Details: " . json_encode($exceptions));
+            throw new ScraperException('All scrapers failed to process the request. Details: '.json_encode($exceptions));
         };
     }
 
     protected function isSuccessfulResponse(ResponseInterface $response): bool
     {
         $statusCode = $response->getStatusCode();
+
         return $statusCode >= 200 && $statusCode < 300;
     }
 }

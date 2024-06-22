@@ -10,6 +10,7 @@ use Illuminate\Support\Manager;
 class ScraperManager extends Manager
 {
     protected $scrapers = [];
+
     protected $nextPriority = 0;
 
     public function addScraper(ScraperInterface $scraper, ?int $priority = null)
@@ -43,6 +44,7 @@ class ScraperManager extends Manager
     {
         $scraper = new ScrapingBeeScraper($config);
         $this->addScraper($scraper, $config['priority'] ?? null);
+
         return $scraper;
     }
 
@@ -50,6 +52,7 @@ class ScraperManager extends Manager
     {
         $scraper = new ZyteScraper($config);
         $this->addScraper($scraper, $config['priority'] ?? null);
+
         return $scraper;
     }
 

@@ -10,7 +10,7 @@ use GuzzleRetry\GuzzleRetryMiddleware;
 
 class ScraperClientFactory
 {
-    public static function create(array $config = null, ScraperManager $manager = null): Client
+    public static function create(?array $config = null, ?ScraperManager $manager = null): Client
     {
         $config = $config ?? config('scraper.http');
         $manager = $manager ?? app(ScraperManager::class);

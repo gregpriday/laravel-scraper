@@ -18,7 +18,7 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         $this->client = new Client([
             'base_uri' => $this->config['base_uri'],
             'headers' => [
-                'Authorization' => 'Basic ' . base64_encode($this->config['api_key'] . ':'),
+                'Authorization' => 'Basic '.base64_encode($this->config['api_key'].':'),
                 'Content-Type' => 'application/json',
             ],
         ]);
@@ -40,10 +40,11 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
             ]);
 
             $data = json_decode($response->getBody(), true);
+
             return $this->transformResponse($data);
         } catch (GuzzleException $e) {
             // Handle the exception (log it, throw a custom exception, etc.)
-            throw new \Exception("Zyte scraping failed: " . $e->getMessage());
+            throw new \Exception('Zyte scraping failed: '.$e->getMessage());
         }
     }
 

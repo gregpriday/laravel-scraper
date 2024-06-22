@@ -4,6 +4,4 @@ namespace GregPriday\Scraper\Exceptions;
 
 use Exception;
 
-class ScraperException extends Exception
-{
-}
+class ScraperException extends Exception {}
