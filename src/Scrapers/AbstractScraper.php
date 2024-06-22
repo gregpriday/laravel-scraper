@@ -37,7 +37,7 @@ abstract class AbstractScraper implements ScraperInterface
         return $this->buildRequest($url, $options);
     }
 
-    abstract protected function buildRequest(string $url, array $options = []): Request;
+    abstract protected function buildRequest(string $url): Request;
 
     abstract public function transformResponse(ResponseInterface $response): ResponseInterface;
 

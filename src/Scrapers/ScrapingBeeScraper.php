@@ -21,7 +21,7 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    protected function buildRequest(string $url, array $options = []): Request
+    protected function buildRequest(string $url): Request
     {
         $params = [
             'api_key' => $this->config['api_key'],
@@ -29,9 +29,6 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
             'render_js' => 'true',
             'premium_proxy' => 'false',
         ];
-
-        // Merge any additional options
-        $params = array_merge($params, $options);
 
         $uri = 'https://app.scrapingbee.com/api/v1/?'.http_build_query($params);
 

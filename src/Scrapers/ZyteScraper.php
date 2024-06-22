@@ -25,13 +25,13 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         ]);
     }
 
-    protected function buildRequest(string $url, array $options = []): Request
+    protected function buildRequest(string $url): Request
     {
-        $payload = array_merge([
+        $payload = [
             'url' => $url,
             'browserHtml' => true,
             'httpResponseHeaders' => true,
-        ], $options);
+        ];
 
         return new Request(
             'POST',

@@ -28,15 +28,28 @@ class ScraperMiddleware
             foreach ($this->manager->getScrapers() as $scraper) {
                 try {
                     $transformedRequest = $scraper->transformRequest($request, $options);
-                    $response = $handler($transformedRequest, $options);
 
-                    // Check if the response is successful
-                    if ($this->isSuccessfulResponse($response)) {
-                        return $scraper->transformResponse($response);
-                    }
+                    return $handler($transformedRequest, $options)
+                        ->then(
+                            function (ResponseInterface $response) use ($scraper) {
+                                // Check if the response is successful
+                                if ($this->isSuccessfulResponse($response)) {
+                                    return $scraper->transformResponse($response);
+                                }
 
-                    // If not successful, throw an exception to try the next scraper
-                    throw new ScraperException("Scraper {$scraper->getName()} failed with status code: {$response->getStatusCode()}");
+                                // If not successful, throw an exception to try the next scraper
+                                throw new ScraperException("Scraper {$scraper->getName()} failed with status code: {$response->getStatusCode()}");
+                            })
+                        ->otherwise(
+                            function (\Exception $e) use ($scraper, &$exceptions) {
+                                $exceptions[] = [
+                                    'scraper' => $scraper->getName(),
+                                    'exception' => $e->getMessage(),
+                                ];
+                                // Rethrow the exception to continue to the next scraper
+                                throw $e;
+                            }
+                        );
                 } catch (\Exception $e) {
                     $exceptions[] = [
                         'scraper' => $scraper->getName(),
