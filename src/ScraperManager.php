@@ -17,7 +17,7 @@ class ScraperManager extends Manager
     {
         if ($priority === null) {
             $priority = $this->nextPriority;
-            $this->nextPriority--;
+            $this->nextPriority++;
         }
 
         $this->scrapers[] = [
@@ -33,7 +33,7 @@ class ScraperManager extends Manager
     protected function sortScrapers()
     {
         usort($this->scrapers, function ($a, $b) {
-            return $b['priority'] <=> $a['priority'];
+            return $a['priority'] <=> $b['priority'];
         });
     }
 
