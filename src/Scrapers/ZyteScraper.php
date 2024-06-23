@@ -69,26 +69,50 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
         foreach ($rawHeaders as $header) {
             if (isset($header['name']) && isset($header['value'])) {
                 $name = strtolower($header['name']);
+                $value = $this->sanitizeHeaderValue($header['value']);
+
                 if ($name === 'set-cookie') {
                     // Handle set-cookie headers separately
-                    if (! isset($headers[$name])) {
+                    if (!isset($headers[$name])) {
                         $headers[$name] = [];
                     }
                     // Split multiple cookies and add them individually
-                    $cookies = explode("\n", $header['value']);
+                    $cookies = explode("\n", $value);
                     foreach ($cookies as $cookie) {
                         $headers[$name][] = trim($cookie);
                     }
-                } else {
-                    if (! isset($headers[$name])) {
+                } elseif ($name === 'link') {
+                    // Handle Link headers separately
+                    if (!isset($headers[$name])) {
                         $headers[$name] = [];
                     }
-                    $headers[$name][] = $header['value'];
+                    // Split multiple link headers and add them individually
+                    $links = explode(',', $value);
+                    foreach ($links as $link) {
+                        $headers[$name][] = trim($link);
+                    }
+                } else {
+                    if (!isset($headers[$name])) {
+                        $headers[$name] = [];
+                    }
+                    $headers[$name][] = $value;
                 }
             }
         }
 
         return $headers;
+    }
+
+    protected function sanitizeHeaderValue(string $value): string
+    {
+        // Remove any character below ASCII 32 except \t
+        $value = preg_replace('/[\x00-\x08\x0B-\x1F]/', '', $value);
+
+        // Replace all whitespace characters with a single space
+        $value = preg_replace('/\s+/', ' ', $value);
+
+        // Trim leading and trailing whitespace
+        return trim($value);
     }
 
     public function getName(): string
