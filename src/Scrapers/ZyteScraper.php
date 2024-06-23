@@ -27,11 +27,11 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
 
     protected function buildRequest(string $url): Request
     {
-        $payload = [
+        $payload = array_merge([
             'url' => $url,
             'browserHtml' => true,
             'httpResponseHeaders' => true,
-        ];
+        ], $this->config['options'] ?? []);
 
         return new Request(
             'POST',
@@ -49,7 +49,7 @@ class ZyteScraper extends AbstractScraper implements ScraperInterface
     {
         $data = json_decode((string) $response->getBody(), true);
 
-        $body = $data['browserHtml'] ?? '';
+        $body = $data['browserHtml'] ?? $data['httpResponseBody'] ?? '';
         $statusCode = $data['statusCode'] ?? 200;
         $rawHeaders = $data['httpResponseHeaders'] ?? [];
 
