@@ -3,6 +3,7 @@
 namespace GregPriday\Scraper\Scrapers;
 
 use GregPriday\Scraper\Contracts\ScraperInterface;
+use GregPriday\Scraper\Exceptions\GoogleDomainException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -29,6 +30,10 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
             'render_js' => 'true',
             'premium_proxy' => 'false',
         ], $this->config['options'] ?? []);
+
+        if ($this->isGoogleDomain($url)) {
+            $params['custom_google'] = 'true';
+        }
 
         $uri = 'https://app.scrapingbee.com/api/v1/?'.http_build_query($params);
 
@@ -58,5 +63,11 @@ class ScrapingBeeScraper extends AbstractScraper implements ScraperInterface
     public function getName(): string
     {
         return 'scrapingbee';
+    }
+
+    private function isGoogleDomain(string $url): bool
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST));
+        return preg_match('/google\.com$/i', $host);
     }
 }
